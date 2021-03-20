@@ -3,6 +3,7 @@ package xyz.bolitao.springsecuritydemo.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -78,7 +79,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .logout()
                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
+                .logoutSuccessHandler((req, resp, authentication)-> {
+                    resp.setContentType("application/json;charset=utf-8");
+                    PrintWriter writer = resp.getWriter();
+                    writer.write(new ObjectMapper().writeValueAsString("注销成功"));
+                    writer.flush();
+                    writer.close();
+                })
                 .and()
-                .csrf().disable();
+                .csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(
+                (req, resp, exception) -> {
+                    resp.setStatus(HttpStatus.UNAUTHORIZED.value());
+                    resp.setContentType("application/json;charset=utf-8");
+                    PrintWriter writer = resp.getWriter();
+                    writer.write(new ObjectMapper().writeValueAsString("尚未登陆"));
+                    writer.flush();
+                    writer.close();
+                });
     }
 }
