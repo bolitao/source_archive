@@ -10,6 +10,16 @@ public class TestController {
         return "site: bolitao.xyz";
     }
 
+    @GetMapping(value = "/admin/test")
+    public String admin() {
+        return "admin test";
+    }
+
+    @GetMapping(value = "/user/test")
+    public String user() {
+        return "user test";
+    }
+
     @GetMapping(value = "success")
     public String success() {
         return "success";

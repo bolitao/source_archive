@@ -1,37 +1,64 @@
 package xyz.bolitao.springsecuritydemo.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.*;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import javax.sql.DataSource;
 import java.io.PrintWriter;
 
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+        return new BCryptPasswordEncoder();
+//        return NoOpPasswordEncoder.getInstance();
     }
 
+//    @Override
+//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+//        auth.inMemoryAuthentication()
+//                .withUser("bolitao")
+//                .password("bolitao")
+//                .roles("USER", "ADMIN")
+//                .and()
+//                .withUser("test1")
+//                .password("test")
+//                .roles("USER");
+//    }
+
+
+    @Autowired
+    DataSource dataSource;
+
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser("bolitao")
-                .password("bolitao")
-                .roles("USER", "ADMIN")
-                .and()
-                .withUser("testuser")
-                .password("test")
-                .roles("USER");
+    @Bean
+    protected UserDetailsService userDetailsService() {
+        JdbcUserDetailsManager userDetailsManager = new JdbcUserDetailsManager(dataSource);
+        if (!userDetailsManager.userExists("bolitao")) {
+            userDetailsManager.createUser(
+                    User.withUsername("bolitao").password(passwordEncoder().encode("bolitao")).roles("ADMIN").build());
+        }
+        if (!userDetailsManager.userExists("test1")) {
+            userDetailsManager.createUser(
+                    User.withUsername("test1").password(passwordEncoder().encode("test")).roles("USER").build());
+        }
+        return userDetailsManager;
     }
 
     @Override
@@ -42,6 +69,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
+                .antMatchers("/admin/**").hasRole("ADMIN")
+                .antMatchers("/user/**").hasRole("USER")
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
@@ -79,7 +108,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .logout()
                 .logoutRequestMatcher(new AntPathRequestMatcher("/logout", "POST"))
-                .logoutSuccessHandler((req, resp, authentication)-> {
+                .logoutSuccessHandler((req, resp, authentication) -> {
                     resp.setContentType("application/json;charset=utf-8");
                     PrintWriter writer = resp.getWriter();
                     writer.write(new ObjectMapper().writeValueAsString("注销成功"));
@@ -97,5 +126,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     writer.flush();
                     writer.close();
                 });
+    }
+
+    @Bean
+    RoleHierarchy roleHierarchy() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER");
+        return roleHierarchy;
     }
 }
