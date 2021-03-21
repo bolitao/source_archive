@@ -1,5 +1,6 @@
 package xyz.bolitao.simpsearchdemo.crawler;
 
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,6 +17,7 @@ import java.util.List;
  * @author boli
  */
 @Component
+@Slf4j
 public class HtmlParseUtil {
     public static void main(String[] args) throws IOException {
         new HtmlParseUtil().parseJd("高效").forEach(System.out::println);

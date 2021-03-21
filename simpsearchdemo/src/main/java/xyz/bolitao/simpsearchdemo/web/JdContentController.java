@@ -24,7 +24,7 @@ public class JdContentController {
 
     @GetMapping(value = "/parse/{keyword}")
     public Boolean parse(@PathVariable("keyword") String keyword) throws IOException {
-        return jdContentService.parseContent("java");
+        return jdContentService.parseContent(keyword);
     }
 
     @GetMapping(value = "/search/{keyword}/{currentPage}/{pageSize}")
@@ -38,6 +38,6 @@ public class JdContentController {
     public List<Map<String, Object>> highlightSearch(@PathVariable("keyword") String keyword,
                                             @PathVariable("currentPage") int currentPage,
                                             @PathVariable("pageSize") int pageSize) throws IOException {
-        return jdContentService.highSearchPageable(keyword, currentPage, pageSize);
+        return jdContentService.highlightSearchPageable(keyword, currentPage, pageSize);
     }
 }

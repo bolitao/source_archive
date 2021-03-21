@@ -1,6 +1,7 @@
 package xyz.bolitao.simpsearchdemo.service;
 
 import com.alibaba.fastjson.JSON;
+import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeUnit;
  * @author boli
  */
 @Service
+@Slf4j
 public class JdContentService {
     private final RestHighLevelClient restHighLevelClientt;
 
@@ -85,7 +87,7 @@ public class JdContentService {
         return ret;
     }
 
-    public List<Map<String, Object>> highSearchPageable(String keyword, Integer currentPage, Integer pageSize) throws IOException {
+    public List<Map<String, Object>> highlightSearchPageable(String keyword, Integer currentPage, Integer pageSize) throws IOException {
         if (currentPage <= 1) {
             currentPage = 1;
         }
