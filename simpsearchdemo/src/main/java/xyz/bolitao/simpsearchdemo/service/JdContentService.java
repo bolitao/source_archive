@@ -6,15 +6,15 @@ import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.WildcardQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import xyz.bolitao.simpsearchdemo.crawler.HtmlParseUtil;
 import xyz.bolitao.simpsearchdemo.crawler.entity.JdContent;
 
-import javax.naming.directory.SearchResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +36,11 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 public class JdContentService {
-    private final RestHighLevelClient restHighLevelClientt;
+    private final RestHighLevelClient restHighLevelClient;
 
     @Autowired
     public JdContentService(RestHighLevelClient restHighLevelClient) {
-        this.restHighLevelClientt = restHighLevelClient;
+        this.restHighLevelClient = restHighLevelClient;
     }
 
     public Boolean parseContent(String keyword) throws IOException {
@@ -55,7 +54,7 @@ public class JdContentService {
                             .source(JSON.toJSONString(content), XContentType.JSON));
         }
 
-        BulkResponse bulk = restHighLevelClientt.bulk(bulkRequest, RequestOptions.DEFAULT);
+        BulkResponse bulk = restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
         return bulk.hasFailures();
     }
 
@@ -70,12 +69,14 @@ public class JdContentService {
         searchSourceBuilder.from(currentPage);
         searchSourceBuilder.size(pageSize);
 
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("title", keyword);
-        searchSourceBuilder.query(termQueryBuilder);
+        //        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("title", keyword);
+//        MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery("title", keyword).analyzer("ik_max_word");
+        WildcardQueryBuilder queryBuilder = QueryBuilders.wildcardQuery("title", "*" + keyword + "*");
+        searchSourceBuilder.query(queryBuilder);
         searchSourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
 
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = restHighLevelClientt.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
 
 
         ArrayList<Map<String, Object>> ret = new ArrayList<>();
@@ -98,8 +99,10 @@ public class JdContentService {
         searchSourceBuilder.from(currentPage);
         searchSourceBuilder.size(pageSize);
 
-        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("title", keyword);
-        searchSourceBuilder.query(termQueryBuilder);
+//        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("title", keyword);
+//        MatchQueryBuilder queryBuilder = QueryBuilders.matchQuery("title", keyword).analyzer("ik_max_word");
+        WildcardQueryBuilder queryBuilder = QueryBuilders.wildcardQuery("title", "*" + keyword + "*");
+        searchSourceBuilder.query(queryBuilder);
         searchSourceBuilder.timeout(new TimeValue(60, TimeUnit.SECONDS));
 
         // highlight
@@ -110,7 +113,7 @@ public class JdContentService {
         searchSourceBuilder.highlighter(highlightBuilder);
 
         searchRequest.source(searchSourceBuilder);
-        SearchResponse searchResponse = restHighLevelClientt.search(searchRequest, RequestOptions.DEFAULT);
+        SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
 
 
         ArrayList<Map<String, Object>> ret = new ArrayList<>();
